@@ -6,12 +6,12 @@ __global__ void sum(float *a, float *b)
 {
 	int tid = threadIdx.x;
 	int bid = blockIdx.x;
-	int sumNum = blockDim.x;
+	int threadNum = blockDim.x;
 
 	__shared__ float sData[512];
-	sData[tid] = a[bid * sumNum + tid];
+	sData[tid] = a[bid * threadNum + tid];
 	__syncthreads();
-	for(int i = sumNum / 2; i > 0; i /= 2)
+	for(int i = threadNum / 2; i > 0; i /= 2)
 	{
 		if(tid < i)
 		{
@@ -40,8 +40,10 @@ void cpuSum(float *a, float *b, int sumNum)
 __global__ void add(int* a, int* b, int* c, int num)
 {
 	int i;
-	i = blockIdx.x;
-	i = threadIdx.x;
+	int tid = threadIdx.x;
+	int bid = blockIdx.x;
+	int threadNum = blockDim.x;
+	i = bid * threadNum + tid;
 	if(i < num)
 	{
 		c[i] = a[i] + b[i];
@@ -51,6 +53,8 @@ __global__ void add(int* a, int* b, int* c, int num)
 int testSum()
 {
 	int sumNum = 512;
+	int threadNum = 1;
+	int blockNum = 512;
 	float a[sumNum];
 	for(int i = 0; i < sumNum; i++)
 	{
@@ -64,11 +68,12 @@ int testSum()
 	cudaMalloc((void**)&bGpu, sumNum * sizeof(float));
 	struct timeval startTime, endTime;
 	gettimeofday(&startTime, NULL);
-	int loopNum = 100000;
+	int loopNum = 1000;
 	for(int i = 0; i < loopNum; i++)
 	{
-		sum<<<sumNum, sumNum>> >(aGpu, bGpu);
+		sum<<<blockNum, threadNum>> >(aGpu, bGpu);
 	}
+	// sum<<<sumNum, sumNum>> >(aGpu, bGpu);
 	gettimeofday(&endTime, NULL);
 	printf("cuda use time: %d\n",
 		(endTime.tv_sec - startTime.tv_sec)*1000000 + (endTime.tv_usec - startTime.tv_usec));
@@ -93,7 +98,9 @@ int testSum()
 int testAdd(void)
 {
 	// init data
-	int num = 10;
+	int num = 5120;
+	int threadNum = 128;
+	int blockNum = 40;
 	int a[num], b[num], c[num];
 	int *a_gpu, *b_gpu, *c_gpu;
 
@@ -113,10 +120,10 @@ int testAdd(void)
 
 	struct timeval startTime, endTime;
 	gettimeofday(&startTime, NULL);
-	int loopNum = 100000;
+	int loopNum = 10000;
 	for(int i = 0; i < loopNum; i++)
 	{
-		add<<<1, num>> >(a_gpu, b_gpu, c_gpu, num);
+		add<<<blockNum, threadNum>> >(a_gpu, b_gpu, c_gpu, num);
 	}
 	gettimeofday(&endTime, NULL);
 	printf("cuda use time: %d\n",
