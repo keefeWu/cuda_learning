@@ -1,4 +1,6 @@
 #include "stdio.h"
+#include <time.h>
+#include <sys/time.h>
 typedef int DTYPE;
 
 void matrix_multiplication_serial_1(DTYPE* a, DTYPE* b, DTYPE* c, int m, int n, int l)
@@ -95,10 +97,35 @@ int main()
         printf("\n");
     }
 
+    struct timeval startTime, endTime;
+    gettimeofday(&startTime, NULL);
+    int loopNum = 10000;
+	for(int i = 0; i < loopNum; i++)
+	{
+        matrix_multiplication_serial_1(a, b, c, m, n, l);
+    }
+    gettimeofday(&endTime, NULL);
+	printf("matrix_multiplication_serial_1 use time: %d\n",
+        (endTime.tv_sec - startTime.tv_sec)*1000000 + (endTime.tv_usec - startTime.tv_usec));
+        
+    gettimeofday(&startTime, NULL);
+    for(int i = 0; i < loopNum; i++)
+	{
+        matrix_multiplication_serial_2(a, b, c, m, n, l);
+    }
+    gettimeofday(&endTime, NULL);
+    printf("matrix_multiplication_serial_2 use time: %d\n",
+        (endTime.tv_sec - startTime.tv_sec)*1000000 + (endTime.tv_usec - startTime.tv_usec));
     
-    matrix_multiplication_serial_1(a, b, c, m, n, l);
-    matrix_multiplication_serial_2(a, b, c, m, n, l);
-    matrix_multiplication_serial_3(a, b, c, m, n, l);
+    gettimeofday(&startTime, NULL);
+    for(int i = 0; i < loopNum; i++)
+	{
+        matrix_multiplication_serial_3(a, b, c, m, n, l);
+    }
+    gettimeofday(&endTime, NULL);
+    printf("matrix_multiplication_serial_3 use time: %d\n",
+        (endTime.tv_sec - startTime.tv_sec)*1000000 + (endTime.tv_usec - startTime.tv_usec));
+    
     //result
     printf("result:\n");
     for(int row = 0; row < m; ++row)
